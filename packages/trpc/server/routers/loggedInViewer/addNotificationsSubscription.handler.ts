@@ -14,6 +14,8 @@ import type { TrpcSessionUser } from "@calcom/trpc/server/types";
 
 import { TRPCError } from "@trpc/server";
 
+import { WEBAPP_URL } from "@calcom/lib/constants";
+
 import type { TAddNotificationsSubscriptionInputSchema } from "./addNotificationsSubscription.schema";
 
 type AddSecondaryEmailOptions = {
@@ -29,7 +31,18 @@ export const addNotificationsSubscriptionHandler = async ({ ctx, input }: AddSec
   const { user } = ctx;
   const { subscription } = input;
 
-  const parsedSubscription = subscriptionSchema.safeParse(JSON.parse(subscription));
+  let subscriptionObj;
+  try {
+    subscriptionObj = JSON.parse(subscription);
+  } catch (error) {
+    log.error("Invalid subscription JSON", error, subscription);
+    throw new TRPCError({
+      code: "BAD_REQUEST",
+      message: "Malformed subscription JSON",
+    });
+  }
+
+  const parsedSubscription = subscriptionSchema.safeParse(subscriptionObj);
 
   if (!parsedSubscription.success) {
     log.error("Invalid subscription", parsedSubscription.error, JSON.stringify(subscription));
@@ -65,7 +78,7 @@ export const addNotificationsSubscriptionHandler = async ({ ctx, input }: AddSec
     },
     title: "Test Notification",
     body: "Push Notifications activated successfully",
-    url: "https://app.cal.com/",
+    url: WEBAPP_URL,
     requireInteraction: false,
     type: "TEST_NOTIFICATION",
   });
