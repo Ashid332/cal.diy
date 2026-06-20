@@ -79,4 +79,19 @@ describe("useUrlMatchesCurrentUrl", () => {
     const { result } = renderHook(() => useUrlMatchesCurrentUrl("?a=1&b=2#section"));
     expect(result.current).toBe(false); // Because current doesn't have the hash
   });
+
+  it("should handle a null pathname without string coercion", async () => {
+    const { usePathname } = await import("next/navigation");
+    const { useCompatSearchParams } = await import("@calcom/lib/hooks/useCompatSearchParams");
+
+    // @ts-expect-error Mocking
+    usePathname.mockReturnValue(null);
+    
+    // @ts-expect-error Mocking
+    useCompatSearchParams.mockReturnValue(new URLSearchParams("a=1"));
+
+    // Ensure that it doesn't construct "null?a=1" and falsely match
+    const { result } = renderHook(() => useUrlMatchesCurrentUrl("null?a=1"));
+    expect(result.current).toBe(false);
+  });
 });

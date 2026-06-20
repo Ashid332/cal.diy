@@ -16,7 +16,7 @@ export const useUrlMatchesCurrentUrl = (url: string, matchFullPath?: boolean) =>
     sortedCurrentQuery = params.toString();
   }
 
-  const pathnameWithQuery = sortedCurrentQuery ? `${pathname}?${sortedCurrentQuery}` : pathname;
+  const pathnameWithQuery = pathname !== null && sortedCurrentQuery ? `${pathname}?${sortedCurrentQuery}` : pathname;
 
   let sortedTargetUrl = url;
   const hashSplit = url.split("#");
