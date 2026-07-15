@@ -15,6 +15,7 @@ import type { Booking, EventType, Prisma, SelectedCalendar } from "@calcom/prism
 import { BookingStatus } from "@calcom/prisma/enums";
 import type { CalendarFetchMode, EventBusyDetails } from "@calcom/types/Calendar";
 import type { CredentialForCalendarService } from "@calcom/types/Credential";
+import { getOverlappingIntervalWhereClause } from "@calcom/lib/prismaIntervalOverlap";
 
 const BATCH_SIZE_FOR_LIMIT_CHECKS = 50;
 const MAX_CONCURRENT_LIMIT_CHECK_BATCHES = 5;
@@ -469,13 +470,7 @@ export class BusyTimesService {
       },
       eventTypeId,
       status: BookingStatus.ACCEPTED,
-      // FIXME: bookings that overlap on one side will never be counted
-      startTime: {
-        gte: startTimeDate,
-      },
-      endTime: {
-        lte: endTimeDate,
-      },
+      ...getOverlappingIntervalWhereClause(startTimeDate, endTimeDate),
     };
 
     if (rescheduleUid) {
