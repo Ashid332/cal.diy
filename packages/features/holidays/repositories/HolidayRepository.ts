@@ -1,6 +1,7 @@
 import { prisma } from "@calcom/prisma";
 import type { Prisma } from "@calcom/prisma/client";
 import { BookingStatus } from "@calcom/prisma/enums";
+import { getOverlappingIntervalWhereClause } from "@calcom/lib/prismaIntervalOverlap";
 
 const holidayCacheSelect = {
   id: true,
@@ -197,9 +198,7 @@ export class HolidayRepository {
       where: {
         userId,
         status: { in: [BookingStatus.ACCEPTED, BookingStatus.PENDING] },
-        OR: dateRanges.map(({ start, end }) => ({
-          AND: [{ startTime: { lt: end } }, { endTime: { gt: start } }],
-        })),
+        OR: dateRanges.map(({ start, end }) => getOverlappingIntervalWhereClause(start, end)),
       },
       select: {
         id: true,

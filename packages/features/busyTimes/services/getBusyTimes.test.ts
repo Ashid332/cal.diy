@@ -397,4 +397,86 @@ describe("getBusyTimesForLimitChecks", () => {
     expect(busyTimes).toHaveLength(1);
     expect(busyTimes[0].userId).toBeNull();
   });
+
+  describe("Behavioral overlap tests (booking limits)", () => {
+    const requestedStart = dayjs("2026-07-15T10:00:00Z");
+    const requestedEnd = dayjs("2026-07-15T11:00:00Z");
+
+    const setupPrismaMock = (existingBookings: any[]) => {
+      vi.mocked(prisma.booking.findMany).mockImplementation(async (args) => {
+        const where = args?.where as any;
+        const startTimeCondition = where?.startTime;
+        const endTimeCondition = where?.endTime;
+        
+        return existingBookings.filter((booking) => {
+          // Emulate Prisma's lt/gt logic
+          const startsBeforeEnd = startTimeCondition?.lt
+            ? dayjs(booking.startTime).isBefore(dayjs(startTimeCondition.lt))
+            : true;
+          const endsAfterStart = endTimeCondition?.gt
+            ? dayjs(booking.endTime).isAfter(dayjs(endTimeCondition.gt))
+            : true;
+          return startsBeforeEnd && endsAfterStart;
+        });
+      });
+    };
+
+    it.each([
+      {
+        scenario: "1. Existing booking starts before the requested interval and ends inside it.",
+        existingStart: "2026-07-15T09:30:00Z",
+        existingEnd: "2026-07-15T10:15:00Z",
+        expectedCount: 1,
+      },
+      {
+        scenario: "2. Existing booking starts inside the requested interval and ends after it.",
+        existingStart: "2026-07-15T10:45:00Z",
+        existingEnd: "2026-07-15T12:00:00Z",
+        expectedCount: 1,
+      },
+      {
+        scenario: "3. Existing booking completely surrounds the requested interval.",
+        existingStart: "2026-07-15T09:00:00Z",
+        existingEnd: "2026-07-15T12:00:00Z",
+        expectedCount: 1,
+      },
+      {
+        scenario: "4. Existing booking is fully contained within the requested interval.",
+        existingStart: "2026-07-15T10:15:00Z",
+        existingEnd: "2026-07-15T10:45:00Z",
+        expectedCount: 1,
+      },
+      {
+        scenario: "5. Existing booking ends exactly when the requested interval starts.",
+        existingStart: "2026-07-15T09:00:00Z",
+        existingEnd: "2026-07-15T10:00:00Z",
+        expectedCount: 0,
+      },
+      {
+        scenario: "6. Existing booking starts exactly when the requested interval ends.",
+        existingStart: "2026-07-15T11:00:00Z",
+        existingEnd: "2026-07-15T12:00:00Z",
+        expectedCount: 0,
+      },
+    ])("$scenario", async ({ existingStart, existingEnd, expectedCount }) => {
+      const mockBooking = createMockBookingResult({
+        startTime: dayjs(existingStart).toDate(),
+        endTime: dayjs(existingEnd).toDate(),
+      });
+      setupPrismaMock([mockBooking]);
+
+      const busyTimesService = getBusyTimesService();
+      const busyTimes = await busyTimesService.getBusyTimesForLimitChecks({
+        userIds: [1],
+        eventTypeId: 1,
+        startDate: requestedStart.format(),
+        endDate: requestedEnd.format(),
+        // PER_YEAR is explicitly excluded from date range expansion in getStartEndDateforLimitCheck
+        // This allows us to test the exact requested interval [10:00 - 11:00]
+        bookingLimits: { PER_YEAR: 5 },
+      });
+
+      expect(busyTimes).toHaveLength(expectedCount);
+    });
+  });
 });

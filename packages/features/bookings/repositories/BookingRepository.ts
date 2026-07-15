@@ -10,6 +10,7 @@ import type {
   BookingWhereUniqueInput,
   IBookingRepository,
 } from "./IBookingRepository";
+import { getOverlappingIntervalWhereClause } from "@calcom/lib/prismaIntervalOverlap";
 
 const referenceSelect = {
   uid: true,
@@ -697,8 +698,7 @@ export class BookingRepository implements IBookingRepository {
     userIdAndEmailMap: Map<number, string>;
   }) {
     const sharedQuery = {
-      startTime: { lte: endDate },
-      endTime: { gte: startDate },
+      ...getOverlappingIntervalWhereClause(startDate, endDate, true),
       status: {
         in: [BookingStatus.ACCEPTED],
       },
@@ -761,8 +761,7 @@ export class BookingRepository implements IBookingRepository {
     const currentBookingsAllUsersQueryThree = eventTypeId
       ? this.prismaClient.booking.findMany({
           where: {
-            startTime: { lte: endDate },
-            endTime: { gte: startDate },
+            ...getOverlappingIntervalWhereClause(startDate, endDate, true),
             eventType: {
               id: eventTypeId,
               requiresConfirmation: true,
