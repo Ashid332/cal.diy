@@ -217,12 +217,7 @@ const usernameCheckForSignup = async ({
   username: string;
   email: string;
 }) => {
-  const response = {
-    available: true,
-    premium: false,
-    suggestedUsername: "",
-  };
-
+  const check = await usernameCheck(usernameRaw);
   const username = slugify(usernameRaw);
 
   const user = await prisma.user.findUnique({
@@ -253,37 +248,17 @@ const usernameCheckForSignup = async ({
     if (!userIsAMemberOfAnOrg) {
       const isClaimingAlreadySetUsername = user.username === username;
       const isClaimingUnsetUsername = !user.username;
-      response.available = isClaimingUnsetUsername || isClaimingAlreadySetUsername;
-      // There are premium users outside an organization only
-      response.premium = await isPremiumUserName(username);
+
+      if (!isClaimingUnsetUsername && !isClaimingAlreadySetUsername) {
+        check.available = false;
+      } else if (isClaimingAlreadySetUsername) {
+        check.available = true;
+        check.suggestedUsername = "";
+      }
     }
-    // If user isn't found, it's a direct signup and that can't be of an organization
-  } else {
-    response.premium = await isPremiumUserName(username);
-    response.available = !(await isUsernameReservedDueToMigration(username));
   }
 
-  // get list of similar usernames in the db
-  const users = await prisma.user.findMany({
-    where: {
-      username: {
-        contains: username,
-      },
-    },
-    select: {
-      username: true,
-    },
-  });
-
-  // We only need suggestedUsername if the username is not available
-  if (!response.available) {
-    response.suggestedUsername = await generateUsernameSuggestion(
-      users.map((user) => user.username).filter(notEmpty),
-      username
-    );
-  }
-
-  return response;
+  return check;
 };
 
 export { usernameHandler, usernameCheck, usernameCheckForSignup };
