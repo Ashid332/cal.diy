@@ -858,7 +858,7 @@ export class BookingRepository implements IBookingRepository {
   }
 
   async findByIdIncludeUserAndAttendees(bookingId: number) {
-    return await this.prismaClient.booking.findUnique({
+    const booking = await this.prismaClient.booking.findUnique({
       where: {
         id: bookingId,
       },
@@ -883,13 +883,15 @@ export class BookingRepository implements IBookingRepository {
           },
           // Ascending order ensures that the first attendee in the list is the booker and others are guests
           // See why it is important https://github.com/calcom/cal.diy/pull/20935
-          // TODO: Ideally we should return `booker` property directly from the booking
           orderBy: {
             id: "asc",
           },
         },
       },
     });
+
+    if (!booking) return null;
+    return { ...booking, booker: booking.attendees[0] };
   }
 
   async findBookingIncludeCalVideoSettingsAndReferences({ bookingUid }: { bookingUid: string }) {
