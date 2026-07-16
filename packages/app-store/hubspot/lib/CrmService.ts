@@ -10,6 +10,7 @@ import logger from "@calcom/lib/logger";
 import { PrismaTrackingRepository } from "@calcom/features/bookings/repositories/PrismaTrackingRepository";
 import prisma from "@calcom/prisma";
 import type { CalEventResponses, CalendarEvent } from "@calcom/types/Calendar";
+import { getParticipantDisplayName } from "@calcom/lib/participant/getParticipantDisplayName";
 import type { CredentialPayload } from "@calcom/types/Credential";
 import type { Contact, ContactCreateInput, CRM, CrmEvent } from "@calcom/types/CrmService";
 import * as hubspot from "@hubspot/api-client";
@@ -68,7 +69,7 @@ class HubspotCalendarService implements CRM {
       })
       .join("<br><br>");
 
-    const organizerName = event.organizer.name || event.organizer.email;
+    const organizerName = getParticipantDisplayName(event.organizer.name, event.organizer.email);
     const organizerInfo = `<b>${event.organizer.language.translate("organizer")}:</b> ${organizerName} (${event.organizer.email})`;
 
     return `${organizerInfo}<br><br><b>${event.organizer.language.translate("invitee_timezone")}:</b> ${
