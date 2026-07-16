@@ -7,8 +7,20 @@ let slotReservationId: null | string = null;
 export const useSlotReservationId = () => {
   function set(uid: string) {
     slotReservationId = uid;
+    try {
+      sessionStorage.setItem("slotReservationId", uid);
+    } catch (e) {
+      // Ignore sessionStorage errors (e.g. in incognito or iframe with partitioned storage)
+    }
   }
   function get() {
+    if (!slotReservationId) {
+      try {
+        slotReservationId = sessionStorage.getItem("slotReservationId");
+      } catch (e) {
+        // Ignore sessionStorage errors
+      }
+    }
     return slotReservationId;
   }
   return [get(), set] as const;
