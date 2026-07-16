@@ -1,4 +1,5 @@
 import type { AuditActorType } from "../repository/IAuditActorRepository";
+import { getParticipantDisplayName } from "@calcom/lib/participant/getParticipantDisplayName";
 import type { BookingAuditWithActor } from "../repository/IBookingAuditRepository";
 import { getAppNameFromSlug } from "../getAppNameFromSlug";
 import type { DataRequirements, EnrichmentDataStore } from "./EnrichmentDataStore";
@@ -47,7 +48,7 @@ export const ACTOR_STRATEGIES: Record<AuditActorType, ActorStrategy> = {
       const attendee = dbStore.getAttendeeById(actor.attendeeId);
       if (attendee) {
         return {
-          displayName: attendee.name || attendee.email,
+          displayName: getParticipantDisplayName(attendee.name, attendee.email),
           displayEmail: attendee.email,
           displayAvatar: null,
         };

@@ -21,6 +21,8 @@ import {
 } from "@calcom/features/webhooks/lib/scheduleTrigger";
 import sendPayload from "@calcom/features/webhooks/lib/sendOrSchedulePayload";
 import type { EventTypeInfo } from "@calcom/features/webhooks/lib/sendPayload";
+import { getErrorFromUnknown } from "@calcom/lib/errors";
+import { getParticipantDisplayName } from "@calcom/lib/participant/getParticipantDisplayName";
 import { HttpError } from "@calcom/lib/http-error";
 import { isPrismaObjOrUndefined } from "@calcom/lib/isPrismaObj";
 import { parseRecurringEvent } from "@calcom/lib/isRecurringEvent";
@@ -241,7 +243,7 @@ async function handler(input: CancelBookingInput, dependencies?: Dependencies) {
       id: organizer.id,
       username: organizer.username || undefined,
       email: bookingToDelete?.userPrimaryEmail ?? organizer.email,
-      name: organizer.name ?? "Nameless",
+      name: getParticipantDisplayName(organizer.name, "Nameless"),
       timeZone: organizer.timeZone,
       timeFormat: getTimeFormatStringFromUserTimeFormat(organizer.timeFormat),
       language: { translate: tOrganizer, locale: organizer.locale ?? "en" },

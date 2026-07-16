@@ -2,6 +2,7 @@ import { eventTypeMetaDataSchemaWithTypedApps } from "@calcom/app-store/zod-util
 import dayjs from "@calcom/dayjs";
 import type { BookingEmailSmsHandler } from "@calcom/features/bookings/lib/BookingEmailSmsHandler";
 import { getOriginalRescheduledBooking } from "@calcom/features/bookings/lib/handleNewBooking/originalRescheduledBookingUtils";
+import { getParticipantDisplayName } from "@calcom/lib/participant/getParticipantDisplayName";
 import type { BookingRepository } from "@calcom/features/bookings/repositories/BookingRepository";
 import { CalendarEventBuilder } from "@calcom/features/CalendarEventBuilder";
 import type { EventNameObjectType } from "@calcom/features/eventtypes/lib/eventNaming";
@@ -71,7 +72,7 @@ export class BookingEmailAndSmsTaskService implements BookingTasks {
       : [];
 
     const eventNameObject = {
-      attendeeName: calendarEvent.organizer.name || "Nameless",
+      attendeeName: getParticipantDisplayName(calendarEvent.organizer.name, "Nameless"),
       eventType: eventType.title,
       eventName: eventType.eventName,
       // we send on behalf of team if >1 round robin attendee | collective
@@ -79,7 +80,7 @@ export class BookingEmailAndSmsTaskService implements BookingTasks {
         eventType.schedulingType === "COLLECTIVE" || bookedTeamMembers.length > 1
           ? eventType.team?.name
           : null,
-      host: calendarEvent.organizer.name || "Nameless",
+      host: getParticipantDisplayName(calendarEvent.organizer.name, "Nameless"),
       location: booking.location,
       eventDuration: dayjs(booking.endTime).diff(booking.startTime, "minutes"),
       bookingFields: eventType.bookingFields as JsonObject,

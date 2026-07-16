@@ -12,7 +12,9 @@ import {
 import { UserRepository } from "@calcom/features/users/repositories/UserRepository";
 import { getTranslation } from "@calcom/i18n/server";
 import { extractBaseEmail } from "@calcom/lib/extract-base-email";
+import { HttpError } from "@calcom/lib/http-error";
 import { parseRecurringEvent } from "@calcom/lib/isRecurringEvent";
+import { getParticipantDisplayName } from "@calcom/lib/participant/getParticipantDisplayName";
 import logger from "@calcom/lib/logger";
 import { prisma } from "@calcom/prisma";
 import type { BookingResponses } from "@calcom/prisma/zod-utils";
@@ -285,7 +287,7 @@ export async function buildCalendarEvent(
     endTime: booking.endTime ? dayjs(booking.endTime).format() : "",
     organizer: {
       email: booking?.userPrimaryEmail ?? organizer.email,
-      name: organizer.name ?? "Nameless",
+      name: getParticipantDisplayName(organizer.name, "Nameless"),
       timeZone: organizer.timeZone,
       language: { translate: tOrganizer, locale: organizer.locale ?? "en" },
     },

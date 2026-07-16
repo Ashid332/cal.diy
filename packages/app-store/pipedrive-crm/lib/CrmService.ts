@@ -7,6 +7,7 @@ import {
 import { getLocation } from "@calcom/lib/CalEventParser";
 import logger from "@calcom/lib/logger";
 import { safeStringify } from "@calcom/lib/safeStringify";
+import { getParticipantDisplayName } from "@calcom/lib/participant/getParticipantDisplayName";
 import type {
   CalendarEvent,
   EventBusyDate,
@@ -162,7 +163,7 @@ class PipedriveCrmService implements CRM {
       const [firstName, lastName] = attendee.name ? attendee.name.split(" ") : [attendee.email, ""];
 
       const bodyData = {
-        name: attendee.name || attendee.email,
+        name: getParticipantDisplayName(attendee.name, attendee.email),
         first_name: firstName,
         last_name: lastName || "",
         email: [{ value: attendee.email, primary: true }],

@@ -1,5 +1,6 @@
 import dayjs from "@calcom/dayjs";
 import type { Prisma } from "@calcom/prisma/client";
+import { getParticipantDisplayName } from "@calcom/lib/participant/getParticipantDisplayName";
 
 import { parseRecurringEvent } from "./isRecurringEvent";
 import { getTranslation } from "@calcom/i18n/server";
@@ -95,7 +96,7 @@ export const buildCalEventFromBooking = async ({
     endTime: booking.endTime ? dayjs(booking.endTime).format() : "",
     organizer: {
       email: booking.userPrimaryEmail ?? organizer.email,
-      name: organizer.name ?? "Nameless",
+      name: getParticipantDisplayName(organizer.name, "Nameless"),
       timeZone: organizer.timeZone,
       language: { translate: tOrganizer, locale: organizer.locale ?? "en" },
     },
