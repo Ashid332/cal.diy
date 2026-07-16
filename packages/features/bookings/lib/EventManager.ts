@@ -1,4 +1,6 @@
-import { cloneDeep, merge } from "lodash";
+import cloneDeep from "lodash/cloneDeep";
+import { merge } from "lodash";
+import { v4 as uuidv4 } from "uuid";
 import { v5 as uuidv5 } from "uuid";
 import type { z } from "zod";
 
@@ -98,14 +100,16 @@ export const processLocation = (event: CalendarEvent): CalendarEvent => {
   // Build proper transforms for evt object
   // Extend evt object with those transformations
 
-  // TODO: Rely on linkType:"dynamic" here. static links don't send their type. They send their URL directly.
-  if (event.location?.includes("integration")) {
-    const maybeLocationRequestObject = getLocationRequestFromIntegration(event.location);
+  const clonedEvent = cloneDeep(event);
 
-    event = merge(event, maybeLocationRequestObject);
+  // TODO: Rely on linkType:"dynamic" here. static links don't send their type. They send their URL directly.
+  if (clonedEvent.location?.includes("integration")) {
+    const maybeLocationRequestObject = getLocationRequestFromIntegration(clonedEvent.location);
+
+    return merge(clonedEvent, maybeLocationRequestObject);
   }
 
-  return event;
+  return clonedEvent;
 };
 
 /**
