@@ -1419,6 +1419,12 @@ export class UserRepository {
     });
   }
 
+  async delete({ id }: { id: number }) {
+    await this.prismaClient.user.delete({
+      where: { id },
+    });
+  }
+
   async deleteMany({ userIds }: {userIds: number[]}){
     await this.prismaClient.user.deleteMany({
       where: {
