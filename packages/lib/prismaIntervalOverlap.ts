@@ -23,21 +23,24 @@ export type OverlappingIntervalWhereClause =
  * bookings to be counted as overlaps using `<=` (`lte`) and `>=` (`gte`). Default is false.
  * @returns A strictly-typed Prisma `where` clause fragment.
  */
+import { ErrorCode } from "@calcom/lib/errorCodes";
+import { ErrorWithCode } from "@calcom/lib/errors";
+
 export function getOverlappingIntervalWhereClause(
   start: Date,
   end: Date,
   inclusive = false
 ): OverlappingIntervalWhereClause {
   if (!(start instanceof Date) || Number.isNaN(start.getTime())) {
-    throw new Error("startTime must be a valid Date.");
+    throw new ErrorWithCode(ErrorCode.InternalServerError, "startTime must be a valid Date.");
   }
 
   if (!(end instanceof Date) || Number.isNaN(end.getTime())) {
-    throw new Error("endTime must be a valid Date.");
+    throw new ErrorWithCode(ErrorCode.InternalServerError, "endTime must be a valid Date.");
   }
 
   if (start.getTime() >= end.getTime()) {
-    throw new Error("startTime must be earlier than endTime.");
+    throw new ErrorWithCode(ErrorCode.InternalServerError, "startTime must be earlier than endTime.");
   }
 
   if (inclusive) {
